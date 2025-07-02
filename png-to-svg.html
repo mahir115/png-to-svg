@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PNG to SVG Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/potrace@2.0.0/potrace.min.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #preview { max-width: 300px; max-height: 300px; display: block; margin-bottom: 1em; }
+    #svg-output { display: block; margin-top: 1em; max-width: 300px; max-height: 300px; }
+  </style>
+</head>
+<body>
+  <h1>PNG to SVG Converter</h1>
+  <input type="file" id="file-input" accept="image/png" />
+  <br>
+  <img id="preview" src="" alt="Preview" style="display:none;" />
+  <br>
+  <button id="download-btn" disabled>Download SVG</button>
+  <div id="svg-output"></div>
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const downloadBtn = document.getElementById('download-btn');
+    const svgOutput = document.getElementById('svg-output');
+    let imgWidth = 0, imgHeight = 0, imgDataUrl = '';
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        preview.src = evt.target.result;
+        preview.style.display = 'block';
+        downloadBtn.disabled = false;
+        imgDataUrl = evt.target.result;
+        // Get image dimensions for SVG
+        const tempImg = new Image();
+        tempImg.onload = function() {
+          imgWidth = tempImg.width;
+          imgHeight = tempImg.height;
+        };
+        tempImg.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    downloadBtn.addEventListener('click', function() {
+      if (!imgDataUrl || !imgWidth || !imgHeight) return;
+      // Embed the PNG as an <image> in SVG
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imgWidth}" height="${imgHeight}">
+  <image href="${imgDataUrl}" width="${imgWidth}" height="${imgHeight}"/>
+</svg>`;
+      svgOutput.innerHTML = svg;
+      const blob = new Blob([svg], {type: 'image/svg+xml'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'image.svg';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    });
+  </script>
+</body>
+</html>
+<style>
+body {
+    background-color: #121212;
+    color: #ffffff;
+}
+</style>
